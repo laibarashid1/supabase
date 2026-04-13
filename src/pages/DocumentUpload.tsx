@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, File, CheckCircle, AlertCircle, Loader2, Database, Zap, ArrowRight, Trash2, Eye } from 'lucide-react';
+import { Upload, File, CheckCircle, Loader2, Database, Zap, Trash2, Eye } from 'lucide-react';
 import { supabase } from '../supabase-client';
 import { useAuth } from '../context/AuthContext';
 
@@ -343,7 +343,7 @@ export default function DocumentUpload() {
                     </div>
                     <div>
                       <h3 style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '0.25rem' }}>{doc.name}</h3>
-                      <div style={{ display: 'flex', itemsCenter: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
                         <span style={{ color: '#4ade80' }}>{formatSize(doc.size_compressed)}</span>
                         <span>•</span>
                         <span>{new Date(doc.created_at).toLocaleDateString()}</span>
