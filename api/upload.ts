@@ -1,5 +1,10 @@
 import { put } from '@vercel/blob';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { IncomingMessage, ServerResponse } from 'http';
+// We define a simple interface to satisfy Vercel's response extensions if types are missing
+interface VercelResponse extends ServerResponse {
+  status: (code: number) => VercelResponse;
+  json: (body: any) => VercelResponse;
+}
 import busboy from 'busboy';
 import { createClient } from '@supabase/supabase-js';
 import zlib from 'zlib';
@@ -25,7 +30,7 @@ function setCors(res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: IncomingMessage, res: VercelResponse) {
   setCors(res);
 
   if (req.method === 'OPTIONS') {
