@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, File, CheckCircle, AlertCircle, Loader2, Database, Zap, ArrowRight, Trash2 } from 'lucide-react';
+import { Upload, File, CheckCircle, AlertCircle, Loader2, Database, Zap, ArrowRight, Trash2, Eye } from 'lucide-react';
 import { supabase } from '../supabase-client';
 import { useAuth } from '../context/AuthContext';
 
@@ -53,6 +53,13 @@ export default function DocumentUpload() {
   const handleUpload = async () => {
     if (!file || !session) return;
 
+    // Client-side size check (4.5MB Vercel limit)
+    if (file.size > 4.5 * 1024 * 1024) {
+      setUploadStatus('error');
+      alert('File too large. Maximum size is 4.5MB for serverless processing.');
+      return;
+    }
+
     setIsUploading(true);
     setUploadStatus('idle');
 
@@ -80,10 +87,14 @@ export default function DocumentUpload() {
         fetchDocuments();
       } else {
         setUploadStatus('error');
-        console.error('Upload failed:', result.error);
+        const errorMessage = result.error || 'Upload failed';
+        const details = result.details ? ` (${result.details})` : '';
+        alert(`${errorMessage}${details}`);
+        console.error('Upload failed:', result);
       }
-    } catch (error) {
+    } catch (error: any) {
       setUploadStatus('error');
+      alert(`System Error: ${error.message}. Ensure you are running with 'vercel dev'.`);
       console.error('Upload system error:', error);
     } finally {
       setIsUploading(false);
@@ -106,203 +117,274 @@ export default function DocumentUpload() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-8 selection:bg-amber-500/30">
-      <div className="max-w-6xl mx-auto space-y-12">
-        {/* Header */}
-        <header className="space-y-4">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-5xl font-bold tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent"
-          >
-            Vercel Document Hub
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-gray-400 text-lg max-w-2xl"
-          >
-            Secure, compressed document storage powered by Vercel Serverless and Blob Storage. 
-            Smart metadata tracking with Supabase Postgres.
-          </motion.p>
-        </header>
+    <div className="gradient-bg" style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      padding: '6rem 2rem',
+      gap: '4rem'
+    }}>
+      <div style={{ textAlign: 'center', maxWidth: '600px' }}>
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ fontSize: '3rem', fontWeight: 700, marginBottom: '1rem' }}
+        >
+          Document Hub
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          style={{ color: 'hsl(var(--muted-foreground))', fontSize: '1.1rem' }}
+        >
+          Securely manage, compress, and store your digital assets with neural-grade optimization.
+        </motion.p>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Upload Section */}
-          <motion.section 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-1 space-y-6"
-          >
-            <div className="bg-[#111] border border-white/5 rounded-3xl p-8 space-y-6 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Database size={120} />
+      <div style={{
+        width: '100%',
+        maxWidth: '1200px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+        gap: '2rem'
+      }}>
+        {/* Upload Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card"
+          style={{
+            padding: '2.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2rem',
+            height: 'fit-content'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{
+              width: '3rem',
+              height: '3rem',
+              borderRadius: '0.75rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white'
+            }}>
+              <Upload size={24} />
+            </div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>New Upload</h2>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="file"
+                id="file-upload"
+                onChange={handleFileChange}
+                disabled={isUploading}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  cursor: 'pointer',
+                  zIndex: 10
+                }}
+              />
+              <div style={{
+                border: '2px border-dashed rgba(255,255,255,0.1)',
+                borderRadius: 'var(--radius)',
+                padding: '3rem 2rem',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem',
+                background: file ? 'rgba(255,255,255,0.05)' : 'transparent',
+                transition: 'all 0.2s ease'
+              }}>
+                <File size={40} style={{ color: file ? 'white' : 'hsl(var(--muted-foreground))' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 500, color: 'white' }}>
+                    {file ? file.name : 'Select Document'}
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>
+                    {file ? formatSize(file.size) : 'PDF, Image, or Doc'}
+                  </span>
+                </div>
               </div>
+            </div>
 
-              <div className="relative z-10 space-y-6">
-                <h2 className="text-2xl font-semibold flex items-center gap-2">
-                  <Upload className="text-amber-400" />
-                  New Upload
-                </h2>
+            <button
+              onClick={() => {
+                if (!file) {
+                  document.getElementById('file-upload')?.click();
+                } else {
+                  handleUpload();
+                }
+              }}
+              disabled={isUploading}
+              style={{
+                padding: '1rem',
+                background: 'white',
+                color: 'black',
+                border: 'none',
+                borderRadius: 'var(--radius)',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                opacity: isUploading ? 0.7 : 1,
+                cursor: isUploading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {isUploading ? <Loader2 className="animate-spin" size={20} /> : (!file ? <Upload size={20} /> : <Zap size={20} />)}
+              {isUploading ? 'Compressing...' : (!file ? 'Select & Upload' : 'Compress & Upload')}
+            </button>
+          </div>
 
-                <div className="space-y-4">
-                  <div className="relative">
-                    <input 
-                      type="file" 
-                      id="file-upload" 
-                      className="hidden" 
-                      onChange={handleFileChange}
-                      disabled={isUploading}
-                    />
-                    <label 
-                      htmlFor="file-upload"
-                      className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl p-10 cursor-pointer hover:border-amber-400/50 hover:bg-amber-400/5 transition-all group"
-                    >
-                      <File className={`w-12 h-12 mb-4 ${file ? 'text-amber-400' : 'text-gray-500 group-hover:text-amber-400'}`} />
-                      <span className="text-sm font-medium text-gray-400 group-hover:text-white transition-colors text-center">
-                        {file ? file.name : "Select or drag document"}
-                      </span>
-                      {file && (
-                        <span className="text-xs text-amber-400/70 mt-2">
-                          {formatSize(file.size)}
-                        </span>
-                      )}
-                    </label>
+          <AnimatePresence>
+            {uploadStatus === 'success' && uploadStats && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{
+                  padding: '1rem',
+                  background: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.2)',
+                  borderRadius: 'var(--radius)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  color: '#4ade80'
+                }}
+              >
+                <CheckCircle size={20} />
+                <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>
+                  Optimized by {Math.round((1 - uploadStats.compressed / uploadStats.original) * 100)}%
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* List Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="glass-card"
+          style={{
+            padding: '2.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2rem'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: '3rem',
+                height: '3rem',
+                borderRadius: '0.75rem',
+                background: 'rgba(255, 255, 255, 0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}>
+                <Database size={24} />
+              </div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Your Vault</h2>
+            </div>
+            <span style={{
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              padding: '0.4rem 0.8rem',
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: '100px',
+              color: 'hsl(var(--muted-foreground))'
+            }}>
+              {documents.length} ASSETS
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '500px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+            {isLoadingDocs ? (
+              <div style={{ padding: '4rem', textAlign: 'center', opacity: 0.5 }}>
+                <Loader2 className="animate-spin mx-auto" size={32} />
+              </div>
+            ) : documents.length === 0 ? (
+              <div style={{ padding: '4rem', textAlign: 'center', color: 'hsl(var(--muted-foreground))', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 'var(--radius)' }}>
+                No assets in vault
+              </div>
+            ) : (
+              documents.map((doc) => (
+                <div key={doc.id} style={{
+                  padding: '1.25rem',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: 'var(--radius)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  transition: 'background 0.2s ease',
+                  cursor: 'default'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      <File size={20} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '0.25rem' }}>{doc.name}</h3>
+                      <div style={{ display: 'flex', itemsCenter: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
+                        <span style={{ color: '#4ade80' }}>{formatSize(doc.size_compressed)}</span>
+                        <span>•</span>
+                        <span>{new Date(doc.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
                   </div>
-
-                  <button
-                    onClick={handleUpload}
-                    disabled={!file || isUploading}
-                    className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                      !file || isUploading 
-                      ? 'bg-white/5 text-gray-500 cursor-not-allowed' 
-                      : 'bg-gradient-to-r from-amber-400 to-amber-600 text-black hover:scale-[1.02] active:scale-[0.98]'
-                    }`}
-                  >
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Zap size={18} />
-                        Compress & Upload
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <AnimatePresence>
-                  {uploadStatus === 'success' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400"
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <a
+                      href={doc.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '0.5rem',
+                        borderRadius: '0.5rem',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'white',
+                        transition: 'all 0.2s'
+                      }}
                     >
-                      <CheckCircle size={18} />
-                      <div className="text-sm">
-                        <p className="font-bold">Upload Complete!</p>
-                        {uploadStats && (
-                          <p className="opacity-80">Saved {Math.round((1 - uploadStats.compressed / uploadStats.original) * 100)}% space</p>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {uploadStatus === 'error' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400"
+                      <Eye size={18} />
+                    </a>
+                    <button
+                      onClick={() => handleDelete(doc.id)}
+                      style={{
+                        padding: '0.5rem',
+                        borderRadius: '0.5rem',
+                        background: 'rgba(239, 68, 68, 0.05)',
+                        color: '#ef4444',
+                        border: 'none',
+                        transition: 'all 0.2s'
+                      }}
                     >
-                      <AlertCircle size={18} />
-                      <span className="text-sm font-medium">Upload failed. Please try again.</span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-          </motion.section>
-
-          {/* List Section */}
-          <motion.section 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-2 space-y-6"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-semibold">Your Documents</h2>
-              <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">
-                {documents.length} Total Assets
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              {isLoadingDocs ? (
-                <div className="h-64 flex flex-col items-center justify-center text-gray-500 gap-4">
-                  <Loader2 className="animate-spin w-8 h-8 text-amber-400" />
-                  <p>Fetching storage data...</p>
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
-              ) : documents.length === 0 ? (
-                <div className="h-64 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center text-gray-500">
-                  <File className="w-12 h-12 mb-4 opacity-20" />
-                  <p>No documents uploaded yet</p>
-                </div>
-              ) : (
-                documents.map((doc, index) => (
-                  <motion.div
-                    key={doc.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="bg-[#111] hover:bg-[#151515] border border-white/5 p-5 rounded-2xl flex items-center justify-between group transition-all"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-amber-400/10 rounded-xl text-amber-400">
-                        <File size={22} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-200 group-hover:text-white transition-colors max-w-[200px] truncate">
-                          {doc.name}
-                        </h3>
-                        <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                          <span className="flex items-center gap-1">
-                            <span className="line-through">{formatSize(doc.size_original)}</span>
-                            <ArrowRight size={10} />
-                            <span className="text-emerald-400 font-medium">{formatSize(doc.size_compressed)}</span>
-                          </span>
-                          <span>•</span>
-                          <span>{new Date(doc.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <a 
-                        href={doc.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        View
-                      </a>
-                      <button
-                        onClick={() => handleDelete(doc.id)}
-                        className="p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </div>
-          </motion.section>
-        </div>
+              ))
+            )}
+          </div>
+        </motion.div>
       </div>
     </div>
   );

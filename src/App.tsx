@@ -40,7 +40,7 @@ const Navbar = () => {
         <Link to="/tasks" style={{ transition: 'color 0.2s' }}>Tasks</Link>
         <Link to="/documents" style={{ transition: 'color 0.2s' }}>Documents</Link>
       </div>
-      
+
       {session ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'white' }}>
@@ -102,26 +102,26 @@ function App() {
       <AuthProvider>
         <div style={{ position: 'relative' }}>
           <Navbar />
-          
+
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route 
-              path="/tasks" 
+            <Route
+              path="/tasks"
               element={
                 <ProtectedRoute>
                   <Tasks />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/documents" 
+            <Route
+              path="/documents"
               element={
                 <ProtectedRoute>
                   <DocumentUpload />
                 </ProtectedRoute>
-              } 
+              }
             />
           </Routes>
 

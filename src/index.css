@@ -53,7 +53,12 @@ body {
   overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -79,14 +84,22 @@ h1, h2, h3, h4, h5, h6 {
 /* Gradient backgrounds */
 .gradient-bg {
   background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.15), transparent),
-              radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.15), transparent);
+    radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.15), transparent);
 }
 
 /* Animations */
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .animate-float {
