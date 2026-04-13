@@ -69,15 +69,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Empty request body', details: 'Stream yielded no data' });
     }
 
-    // 3. AUTH CHECK
+    // 3. AUTH CHECK (Post-Buffering)
     const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized', details: 'No Authorization header found.' });
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader?.replace('Bearer ', '') || ''
-    );
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      return res.status(401).json({ error: 'Unauthorized', details: authError?.message || 'Invalid session' });
+      console.error('[Upload] Auth Error:', authError);
+      return res.status(401).json({ 
+        error: 'Unauthorized', 
+        details: authError?.message || 'Invalid session',
+        tip: 'Ensure VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in Vercel Environment Variables.' 
+      });
     }
 
     const userId = user.id;
